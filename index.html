@@ -18,7 +18,7 @@
       background: rgba(255, 255, 255, 0.15);
       padding: 30px;
       border-radius: 15px;
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
     }
 
@@ -28,16 +28,21 @@
       width: 80%;
       border-radius: 8px;
       border: none;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
 
     button {
-      font-size: 18px;
+      font-size: 16px;
       padding: 10px 20px;
-      margin: 10px;
+      margin: 8px;
       border-radius: 10px;
       border: none;
       cursor: pointer;
+    }
+
+    .save {
+      background: #2196f3;
+      color: white;
     }
 
     .yes {
@@ -62,15 +67,24 @@
   <div class="card">
     <h1>💙 ¿Estás bien?</h1>
 
-    <input id="playerName" placeholder="Escribe tu nombre" />
+    <div id="nameSection">
+      <input id="playerName" placeholder="Escribe tu nombre" />
+      <br>
+      <button class="save" onclick="saveName()">Guardar nombre</button>
+    </div>
 
-    <p>Puntos: <strong id="points">0</strong></p>
+    <div id="gameSection" style="display:none;">
+      <p>Jugador: <strong id="playerLabel"></strong></p>
+      <p>Puntos: <strong id="points">0</strong></p>
 
-    <button class="yes" onclick="answer(true)">Sí</button>
-    <button class="no" onclick="answer(false)">No</button>
+      <button class="yes" onclick="answer(true)">Sí</button>
+      <button class="no" onclick="answer(false)">No</button>
+    </div>
 
-    <h2>🏆 Ranking</h2>
-    <ul id="ranking"></ul>
+    <div id="rankingSection" style="display:none;">
+      <h2>🏆 Ranking</h2>
+      <ul id="ranking"></ul>
+    </div>
   </div>
 
   <!-- 🔥 FIREBASE -->
@@ -97,15 +111,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    let playerName = "";
     let points = 0;
 
-    window.answer = async function(isYes) {
-      const name = document.getElementById("playerName").value.trim();
-      if (!name) {
-        alert("Por favor escribe tu nombre");
+    window.saveName = function () {
+      const input = document.getElementById("playerName").value.trim();
+      if (!input) {
+        alert("Escribe un nombre válido");
         return;
       }
 
+      playerName = input;
+      document.getElementById("playerLabel").textContent = playerName;
+
+      document.getElementById("nameSection").style.display = "none";
+      document.getElementById("gameSection").style.display = "block";
+    };
+
+    window.answer = async function (isYes) {
       if (isYes) {
         points += 10;
       } else {
@@ -114,13 +137,17 @@
 
       document.getElementById("points").textContent = points;
 
-      await addDoc(collection(db, "ranking"), {
-        name: name,
-        points: points
-      });
+      if (points !== 0) {
+        document.getElementById("rankingSection").style.display = "block";
 
-      loadRanking();
-    }
+        await addDoc(collection(db, "ranking"), {
+          name: playerName,
+          points: points
+        });
+
+        loadRanking();
+      }
+    };
 
     async function loadRanking() {
       const rankingEl = document.getElementById("ranking");
@@ -133,13 +160,13 @@
 
       const snapshot = await getDocs(q);
       snapshot.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = `${doc.data().name}: ${doc.data().points} pts`;
-        rankingEl.appendChild(li);
+        if (doc.data().points !== 0) {
+          const li = document.createElement("li");
+          li.textContent = `${doc.data().name}: ${doc.data().points} pts`;
+          rankingEl.appendChild(li);
+        }
       });
     }
-
-    loadRanking();
   </script>
 
 </body>
