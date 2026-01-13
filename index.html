@@ -3,24 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <title>Juego de Puntos</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 40px;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>🎮 Mi primer juego</h1>
+  <h1>🎮 Juego de Puntos</h1>
 
-  <div id="player-section">
-    <input type="text" id="playerNameInput" placeholder="Tu nombre">
-    <button id="saveName">Guardar nombre</button>
-    <button id="changeName">Cambiar nombre</button>
-  </div>
+  <p>Puntos: <strong id="points">0</strong></p>
+  <button id="addPoint">Sumar punto</button>
 
-  <p>Jugador: <strong id="playerName">---</strong></p>
+  <h2>🏆 Ranking</h2>
+  <ul id="ranking"></ul>
 
-  <p>Puntos: <span id="points">0</span></p>
+  <!-- 🔥 FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-  <button id="btn">Ganar puntos</button>
+    // 🔹 TU CONFIGURACIÓN (YA ES CORRECTA)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnuwKZChH9I-ssUq-fw35f1gi8_NlR290",
+      authDomain: "juego-puntos-ranking.firebaseapp.com",
+      projectId: "juego-puntos-ranking",
+      storageBucket: "juego-puntos-ranking.firebasestorage.app",
+      messagingSenderId: "360729228232",
+      appId: "1:360729228232:web:dda8a331fbf6e3800146fd"
+    };
 
-  <script src="script.js"></script>
+    // 🔹 Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let points = 0;
+    const pointsEl = document.getElementById("points");
+    const rankingEl = document.getElementById("ranking");
+
+    // 🟢 SUMAR PUNTOS
+    document.getElementById("addPoint").addEventListener("click", async () => {
+      points++;
+      pointsEl.textContent = points;
+
+      await addDoc(collection(db, "ranking"), {
+        name: "Jugador",
+        points: points
+      });
+
+      loadRanking();
+    });
+
+    // 🏆 CARGAR RANKING
+    async function loadRanking() {
+      rankingEl.innerHTML = "";
+
+      const q = query(
+        collection(db, "ranking"),
+        orderBy("points", "desc")
+      );
+
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        const li = document.createElement("li");
+        li.textContent = `${doc.data().name}: ${doc.data().points}`;
+        rankingEl.appendChild(li);
+      });
+    }
+
+    loadRanking();
+  </script>
+
 </body>
-
+</html>
