@@ -2,34 +2,76 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Juego de Puntos</title>
+  <title>Juego de Bienestar</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #3b5cff, #6a1b9a);
+      color: white;
       text-align: center;
-      background: #f4f4f4;
       padding: 40px;
+      min-height: 100vh;
     }
+
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 15px;
+    }
+
     button {
       font-size: 18px;
       padding: 10px 20px;
+      margin: 10px;
+      border-radius: 10px;
+      border: none;
       cursor: pointer;
     }
+
+    .yes {
+      background: #4caf50;
+      color: white;
+    }
+
+    .no {
+      background: #f44336;
+      color: white;
+    }
+
     ul {
       list-style: none;
       padding: 0;
     }
   </style>
 </head>
+
 <body>
 
-  <h1>🎮 Juego de Puntos</h1>
+  <div class="card">
+    <h1>💙 ¿Estás bien?</h1>
 
-  <p>Puntos: <strong id="points">0</strong></p>
-  <button id="addPoint">Sumar punto</button>
+    <input id="playerName" placeholder="Escribe tu nombre" />
 
-  <h2>🏆 Ranking</h2>
-  <ul id="ranking"></ul>
+    <p>Puntos: <strong id="points">0</strong></p>
+
+    <button class="yes" onclick="answer(true)">Sí</button>
+    <button class="no" onclick="answer(false)">No</button>
+
+    <h2>🏆 Ranking</h2>
+    <ul id="ranking"></ul>
+  </div>
 
   <!-- 🔥 FIREBASE -->
   <script type="module">
@@ -43,7 +85,6 @@
       orderBy
     } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-    // 🔹 TU CONFIGURACIÓN (YA ES CORRECTA)
     const firebaseConfig = {
       apiKey: "AIzaSyBnuwKZChH9I-ssUq-fw35f1gi8_NlR290",
       authDomain: "juego-puntos-ranking.firebaseapp.com",
@@ -53,29 +94,36 @@
       appId: "1:360729228232:web:dda8a331fbf6e3800146fd"
     };
 
-    // 🔹 Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let points = 0;
-    const pointsEl = document.getElementById("points");
-    const rankingEl = document.getElementById("ranking");
 
-    // 🟢 SUMAR PUNTOS
-    document.getElementById("addPoint").addEventListener("click", async () => {
-      points++;
-      pointsEl.textContent = points;
+    window.answer = async function(isYes) {
+      const name = document.getElementById("playerName").value.trim();
+      if (!name) {
+        alert("Por favor escribe tu nombre");
+        return;
+      }
+
+      if (isYes) {
+        points += 10;
+      } else {
+        points -= 10;
+      }
+
+      document.getElementById("points").textContent = points;
 
       await addDoc(collection(db, "ranking"), {
-        name: "Jugador",
+        name: name,
         points: points
       });
 
       loadRanking();
-    });
+    }
 
-    // 🏆 CARGAR RANKING
     async function loadRanking() {
+      const rankingEl = document.getElementById("ranking");
       rankingEl.innerHTML = "";
 
       const q = query(
@@ -83,10 +131,10 @@
         orderBy("points", "desc")
       );
 
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
+      const snapshot = await getDocs(q);
+      snapshot.forEach(doc => {
         const li = document.createElement("li");
-        li.textContent = `${doc.data().name}: ${doc.data().points}`;
+        li.textContent = `${doc.data().name}: ${doc.data().points} pts`;
         rankingEl.appendChild(li);
       });
     }

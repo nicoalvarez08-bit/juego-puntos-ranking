@@ -45,3 +45,4 @@ changeNameBtn.addEventListener("click", () => {
   localStorage.removeItem("playerName");
   location.reload();
 });
+ 
